@@ -1,0 +1,28 @@
+[package]
+name = "tui-kit"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Image-based cyberpunk card-navigation toolset for ratatui TUIs (SVG -> PNG -> terminal graphics protocol)"
+
+[dependencies]
+# Re-exported at the crate root (`pub use ratatui;` / `pub use ratatui_image;`)
+# so downstream consumers build against tui-kit's own pinned versions of the
+# `Buffer`/protocol types instead of risking a version-skewed direct dep.
+ratatui = "0.29"
+ratatui-image = "8"
+image = "0.25"
+
+# Vendored SVG -> PNG rasterizer. `resvg` re-exports the exact `usvg` and
+# `tiny_skia` it was built against; using `resvg::usvg`/`resvg::tiny_skia`
+# (see src/render.rs) instead of separate top-level deps avoids a version
+# mismatch between what we parse and what `resvg::render` expects.
+resvg = { version = "0.47", default-features = false, features = ["text"] }
+tiny-skia = "0.12"
+fontdb = "0.23"
+usvg = "0.47"
+thiserror = "2"
+
+[[example]]
+name = "gallery"
+path = "examples/gallery.rs"
