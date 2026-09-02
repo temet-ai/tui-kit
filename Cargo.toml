@@ -29,6 +29,7 @@ thiserror = "2"
 # Optional GPU-shader backend for a later unit of work; stubbed here only
 # (src/shader.rs) so the crate compiles with the feature declared.
 tui-shader = { version = "=0.0.10", optional = true }
+opaline = "0.4.1"
 
 [dev-dependencies]
 notify = "8.2"

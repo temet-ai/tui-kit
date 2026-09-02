@@ -5,14 +5,22 @@
 //! protocol (Kitty/iTerm2/Sixel, with an automatic half-block fallback) using
 //! `ratatui-image` — never box-drawing cells.
 //!
+//! Alongside that image path, [`design`] is the text-mode **TUI Design**
+//! implementation layer: SilkCircuit Neon colors through a capability tier,
+//! the one universal layout, bordered panels, a navigation-only help bar, and
+//! full-row selection — box-drawing cells only, and no dependency on any of
+//! the rasterizer crates the image path uses.
+//!
 //! Re-exported at the crate root so downstream consumers build against this
-//! crate's own pinned `ratatui`/`ratatui-image` versions rather than a
-//! separately-resolved (and potentially skewed) direct dependency.
+//! crate's own pinned `ratatui`/`ratatui-image`/`opaline` versions rather than
+//! a separately-resolved (and potentially skewed) direct dependency.
+pub use opaline;
 pub use ratatui;
 pub use ratatui_image;
 
 pub mod cache;
 pub mod card;
+pub mod design;
 #[cfg(feature = "input")]
 pub mod console;
 // `nav` itself stays unconditional: `NavState`/`NavAction` carry no crossterm
@@ -31,6 +39,7 @@ pub mod widget;
 
 pub use cache::ImageCache;
 pub use card::{Card, CardState};
+pub use design::{DesignTheme, Slot, Tier};
 #[cfg(feature = "input")]
 pub use console::{ConsoleAction, ConsoleShell, ConsoleState, handle_console_key};
 pub use nav::{NavAction, NavState};
