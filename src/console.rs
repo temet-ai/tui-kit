@@ -46,7 +46,10 @@ impl ConsoleState {
     pub fn new(tab_card_counts: &[usize], columns: usize) -> Self {
         Self {
             active_tab: 0,
-            navs: tab_card_counts.iter().map(|&len| NavState::new(len, columns)).collect(),
+            navs: tab_card_counts
+                .iter()
+                .map(|&len| NavState::new(len, columns))
+                .collect(),
         }
     }
 
@@ -153,7 +156,11 @@ impl<'a> StatefulWidget for ConsoleShell<'a> {
             .min(self.tab_cards.len().saturating_sub(1))
             .min(state.navs.len().saturating_sub(1));
         let cards = self.tab_cards.get(active).map(Vec::as_slice).unwrap_or(&[]);
-        CardGrid::new(cards, self.theme, self.picker, self.cache).render(main_area, buf, &mut state.navs[active]);
+        CardGrid::new(cards, self.theme, self.picker, self.cache).render(
+            main_area,
+            buf,
+            &mut state.navs[active],
+        );
 
         StatusBar::new(self.mode, self.message, self.keys, self.theme).render(status_area, buf);
     }
@@ -198,11 +205,23 @@ fn render_header(area: Rect, buf: &mut Buffer, theme: &Theme, active_tab: usize)
     Tabs::new(&TAB_TITLES, active_tab, theme).render(cols[1], buf);
 
     let node_x = cols[2].x + cols[2].width.saturating_sub(node_width);
-    buf.set_stringn(node_x, cols[2].y, NODE_INFO, node_width as usize, Style::new().fg(theme.faint));
+    buf.set_stringn(
+        node_x,
+        cols[2].y,
+        NODE_INFO,
+        node_width as usize,
+        Style::new().fg(theme.faint),
+    );
 
     if area.height >= 2 {
         let line = "\u{2500}".repeat(area.width as usize);
-        buf.set_stringn(area.x, area.y + 1, &line, area.width as usize, Style::new().fg(theme.border));
+        buf.set_stringn(
+            area.x,
+            area.y + 1,
+            &line,
+            area.width as usize,
+            Style::new().fg(theme.border),
+        );
     }
 }
 
@@ -249,14 +268,23 @@ mod tests {
         let mut s = state();
         let action = handle_console_key(&mut s, key(KeyCode::Char('9')));
         assert_eq!(action, None);
-        assert_eq!(s.active_tab, 0, "an unhandled key must not move the active tab");
+        assert_eq!(
+            s.active_tab, 0,
+            "an unhandled key must not move the active tab"
+        );
     }
 
     #[test]
     fn q_and_esc_quit() {
         let mut s = state();
-        assert_eq!(handle_console_key(&mut s, key(KeyCode::Char('q'))), Some(ConsoleAction::Quit));
-        assert_eq!(handle_console_key(&mut s, key(KeyCode::Esc)), Some(ConsoleAction::Quit));
+        assert_eq!(
+            handle_console_key(&mut s, key(KeyCode::Char('q'))),
+            Some(ConsoleAction::Quit)
+        );
+        assert_eq!(
+            handle_console_key(&mut s, key(KeyCode::Esc)),
+            Some(ConsoleAction::Quit)
+        );
     }
 
     #[test]
@@ -276,10 +304,16 @@ mod tests {
 
         handle_console_key(&mut s, key(KeyCode::Char('2'))); // switch to tab 1
         assert_eq!(s.active_tab, 1);
-        assert_eq!(s.navs[1].selected, 0, "switching tabs must not touch the new tab's own selection");
+        assert_eq!(
+            s.navs[1].selected, 0,
+            "switching tabs must not touch the new tab's own selection"
+        );
 
         handle_console_key(&mut s, key(KeyCode::Char('1'))); // back to tab 0
-        assert_eq!(s.navs[0].selected, 1, "leaving and returning to a tab must preserve its selection");
+        assert_eq!(
+            s.navs[0].selected, 1,
+            "leaving and returning to a tab must preserve its selection"
+        );
     }
 
     #[test]

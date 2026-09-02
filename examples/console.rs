@@ -13,16 +13,19 @@
 use std::io;
 use std::time::Duration;
 
-use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::{CrosstermBackend, TestBackend};
 use tui_kit::ratatui::buffer::{Buffer, Cell};
 use tui_kit::ratatui::crossterm::event::{self, Event};
 use tui_kit::ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use tui_kit::ratatui::crossterm::{ExecutableCommand, execute};
+use tui_kit::ratatui::crossterm::{execute, ExecutableCommand};
+use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui_image::picker::Picker;
-use tui_kit::{Card, ConsoleAction, ConsoleShell, ConsoleState, ImageCache, NavAction, Theme, handle_console_key};
+use tui_kit::{
+    handle_console_key, Card, ConsoleAction, ConsoleShell, ConsoleState, ImageCache, NavAction,
+    Theme,
+};
 
 // Deprecated constructor kept for deterministic 8x16 pixel output in
 // headless paths: `Picker::halfblocks()` pins 10x20 and would change
@@ -50,7 +53,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "proc".to_string(),
                 title: "Process monitor".to_string(),
                 subtitle: Some("128 units · systemd".to_string()),
-                bullets: vec!["Live CPU/RSS per unit".to_string(), "Auto-restart on failure".to_string()],
+                bullets: vec![
+                    "Live CPU/RSS per unit".to_string(),
+                    "Auto-restart on failure".to_string(),
+                ],
                 action: Some("Inspect".to_string()),
                 hotkey: Some("p".to_string()),
             },
@@ -58,7 +64,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "proc".to_string(),
                 title: "Zombie reaper".to_string(),
                 subtitle: Some("0 zombies · last swept 4m ago".to_string()),
-                bullets: vec!["SIGCHLD handler armed".to_string(), "Reparents to init on exit".to_string()],
+                bullets: vec![
+                    "SIGCHLD handler armed".to_string(),
+                    "Reparents to init on exit".to_string(),
+                ],
                 action: Some("Sweep".to_string()),
                 hotkey: Some("z".to_string()),
             },
@@ -66,7 +75,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "proc".to_string(),
                 title: "Cgroup limits".to_string(),
                 subtitle: Some("cpu.max 4.0 · mem.max 8G".to_string()),
-                bullets: vec!["OOM score tracked per unit".to_string(), "Throttling events logged".to_string()],
+                bullets: vec![
+                    "OOM score tracked per unit".to_string(),
+                    "Throttling events logged".to_string(),
+                ],
                 action: Some("Tune".to_string()),
                 hotkey: Some("c".to_string()),
             },
@@ -76,7 +88,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "pods".to_string(),
                 title: "Pod fleet".to_string(),
                 subtitle: Some("12 running · 0 pending".to_string()),
-                bullets: vec!["Rolling restarts tracked".to_string(), "Node affinity respected".to_string()],
+                bullets: vec![
+                    "Rolling restarts tracked".to_string(),
+                    "Node affinity respected".to_string(),
+                ],
                 action: Some("View".to_string()),
                 hotkey: Some("d".to_string()),
             },
@@ -84,7 +99,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "pods".to_string(),
                 title: "Ingress routes".to_string(),
                 subtitle: Some("6 hosts · TLS auto-renewed".to_string()),
-                bullets: vec!["Canary weight 10%".to_string(), "Sticky sessions on".to_string()],
+                bullets: vec![
+                    "Canary weight 10%".to_string(),
+                    "Sticky sessions on".to_string(),
+                ],
                 action: Some("Route".to_string()),
                 hotkey: Some("r".to_string()),
             },
@@ -92,7 +110,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "pods".to_string(),
                 title: "Node drain queue".to_string(),
                 subtitle: Some("1 draining · 0 cordoned".to_string()),
-                bullets: vec!["PodDisruptionBudget respected".to_string(), "Drain timeout 90s".to_string()],
+                bullets: vec![
+                    "PodDisruptionBudget respected".to_string(),
+                    "Drain timeout 90s".to_string(),
+                ],
                 action: Some("Drain".to_string()),
                 hotkey: Some("n".to_string()),
             },
@@ -102,7 +123,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "api".to_string(),
                 title: "API gateway".to_string(),
                 subtitle: Some("p99 42ms · 0.02% err".to_string()),
-                bullets: vec!["Rate limits per route".to_string(), "Circuit breaker armed".to_string()],
+                bullets: vec![
+                    "Rate limits per route".to_string(),
+                    "Circuit breaker armed".to_string(),
+                ],
                 action: Some("Open".to_string()),
                 hotkey: Some("f".to_string()),
             },
@@ -110,7 +134,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "api".to_string(),
                 title: "Auth tokens".to_string(),
                 subtitle: Some("JWT · 15m TTL".to_string()),
-                bullets: vec!["Refresh rotation enabled".to_string(), "Revocation list synced".to_string()],
+                bullets: vec![
+                    "Refresh rotation enabled".to_string(),
+                    "Revocation list synced".to_string(),
+                ],
                 action: Some("Rotate".to_string()),
                 hotkey: Some("t".to_string()),
             },
@@ -118,7 +145,10 @@ fn tab_cards() -> Vec<Vec<Card>> {
                 tag: "api".to_string(),
                 title: "Webhook delivery".to_string(),
                 subtitle: Some("99.4% delivered · 3 retrying".to_string()),
-                bullets: vec!["Exponential backoff armed".to_string(), "Dead-letter queue watched".to_string()],
+                bullets: vec![
+                    "Exponential backoff armed".to_string(),
+                    "Dead-letter queue watched".to_string(),
+                ],
                 action: Some("Retry".to_string()),
                 hotkey: Some("w".to_string()),
             },
@@ -158,7 +188,14 @@ fn interactive_mode() -> Result<(), Box<dyn std::error::Error>> {
     let counts: Vec<usize> = cards.iter().map(Vec::len).collect();
     let mut state = ConsoleState::new(&counts, COLUMNS);
 
-    let result = run(&mut terminal, &cards, &theme, &picker, &mut cache, &mut state);
+    let result = run(
+        &mut terminal,
+        &cards,
+        &theme,
+        &picker,
+        &mut cache,
+        &mut state,
+    );
 
     disable_raw_mode()?;
     io::stdout().execute(LeaveAlternateScreen)?;
@@ -176,7 +213,15 @@ fn run(
 ) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|frame| {
-            let shell = ConsoleShell::new(tab_cards, theme, picker, cache, "normal", "console ready", &KEY_HINTS);
+            let shell = ConsoleShell::new(
+                tab_cards,
+                theme,
+                picker,
+                cache,
+                "normal",
+                "console ready",
+                &KEY_HINTS,
+            );
             frame.render_stateful_widget(shell, frame.area(), state);
         })?;
 
@@ -209,21 +254,23 @@ fn render_shell_headless(
 ) -> Result<Buffer, Box<dyn std::error::Error>> {
     use std::panic::{self, AssertUnwindSafe};
 
-    let result: Result<Buffer, std::convert::Infallible> = panic::catch_unwind(AssertUnwindSafe(|| {
-        let drawn = terminal.draw(|frame| {
-            let shell = ConsoleShell::new(tab_cards, theme, picker, cache, mode, message, &KEY_HINTS);
-            frame.render_stateful_widget(shell, frame.area(), state);
+    let result: Result<Buffer, std::convert::Infallible> =
+        panic::catch_unwind(AssertUnwindSafe(|| {
+            let drawn = terminal.draw(|frame| {
+                let shell =
+                    ConsoleShell::new(tab_cards, theme, picker, cache, mode, message, &KEY_HINTS);
+                frame.render_stateful_widget(shell, frame.area(), state);
+            })?;
+            Ok(drawn.buffer.clone())
+        }))
+        .map_err(|e| -> Box<dyn std::error::Error> {
+            let context = e
+                .downcast_ref::<&str>()
+                .map(|s| s.to_string())
+                .or_else(|| e.downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "<non-string panic payload>".to_string());
+            format!("ConsoleShell render panicked inside TestBackend: {context}").into()
         })?;
-        Ok(drawn.buffer.clone())
-    }))
-    .map_err(|e| -> Box<dyn std::error::Error> {
-        let context = e
-            .downcast_ref::<&str>()
-            .map(|s| s.to_string())
-            .or_else(|| e.downcast_ref::<String>().cloned())
-            .unwrap_or_else(|| "<non-string panic payload>".to_string());
-        format!("ConsoleShell render panicked inside TestBackend: {context}").into()
-    })?;
 
     Ok(result?)
 }
@@ -249,7 +296,10 @@ fn buffer_text_stripped(buf: &Buffer) -> String {
 }
 
 fn non_default_cells(buf: &Buffer) -> usize {
-    buf.content().iter().filter(|cell| **cell != Cell::default()).count()
+    buf.content()
+        .iter()
+        .filter(|cell| **cell != Cell::default())
+        .count()
 }
 
 /// `--selftest`: stand up the REAL `ConsoleShell` + `ConsoleState` +
@@ -274,7 +324,16 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = Terminal::new(TestBackend::new(140, 44))?;
 
-    let buf = render_shell_headless(&mut terminal, &cards, &theme, &picker, &mut cache, "normal", "console ready", &mut state)?;
+    let buf = render_shell_headless(
+        &mut terminal,
+        &cards,
+        &theme,
+        &picker,
+        &mut cache,
+        "normal",
+        "console ready",
+        &mut state,
+    )?;
     let nd = non_default_cells(&buf);
     if nd == 0 {
         return Err("selftest FAIL: rendered TestBackend buffer has no non-default cells".into());
@@ -282,7 +341,10 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     let text = buffer_text_stripped(&buf);
     for needle in ["TEMET", "PROC", "PODS", "API", "NORMAL"] {
         if !text.contains(needle) {
-            return Err(format!("selftest FAIL: rendered buffer is missing {needle:?}\n---\n{text}").into());
+            return Err(format!(
+                "selftest FAIL: rendered buffer is missing {needle:?}\n---\n{text}"
+            )
+            .into());
         }
     }
     println!("selftest: frame 1 rendered via the real ConsoleShell StatefulWidget ({nd} non-default cells)");
@@ -291,21 +353,46 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     let key = |code: KeyCode| KeyEvent::new(code, KeyModifiers::NONE);
 
     let action = handle_console_key(&mut state, key(KeyCode::Char('2')));
-    println!("selftest: '2'    -> {action:?} (active_tab now {})", state.active_tab);
-    assert_eq!(action, Some(ConsoleAction::Tab(1)), "'2' must switch to tab index 1");
+    println!(
+        "selftest: '2'    -> {action:?} (active_tab now {})",
+        state.active_tab
+    );
+    assert_eq!(
+        action,
+        Some(ConsoleAction::Tab(1)),
+        "'2' must switch to tab index 1"
+    );
     assert_eq!(state.active_tab, 1);
 
     let before = state.navs[1].selected;
     let action = handle_console_key(&mut state, key(KeyCode::Right));
-    println!("selftest: Right  -> {action:?} (selected {before} -> {})", state.navs[1].selected);
-    assert!(matches!(action, Some(ConsoleAction::Nav(NavAction::Focus(_)))), "Right must move focus");
-    assert_ne!(state.navs[1].selected, before, "Right must change the active tab's card selection");
+    println!(
+        "selftest: Right  -> {action:?} (selected {before} -> {})",
+        state.navs[1].selected
+    );
+    assert!(
+        matches!(action, Some(ConsoleAction::Nav(NavAction::Focus(_)))),
+        "Right must move focus"
+    );
+    assert_ne!(
+        state.navs[1].selected, before,
+        "Right must change the active tab's card selection"
+    );
 
     let before = state.navs[1].selected;
     let action = handle_console_key(&mut state, key(KeyCode::Down));
-    println!("selftest: Down   -> {action:?} (selected {before} -> {})", state.navs[1].selected);
-    assert!(matches!(action, Some(ConsoleAction::Nav(NavAction::Focus(_)))), "Down must move focus");
-    assert_ne!(state.navs[1].selected, before, "Down must change the active tab's card selection");
+    println!(
+        "selftest: Down   -> {action:?} (selected {before} -> {})",
+        state.navs[1].selected
+    );
+    assert!(
+        matches!(action, Some(ConsoleAction::Nav(NavAction::Focus(_)))),
+        "Down must move focus"
+    );
+    assert_ne!(
+        state.navs[1].selected, before,
+        "Down must change the active tab's card selection"
+    );
 
     let action = handle_console_key(&mut state, key(KeyCode::Char('q')));
     println!("selftest: 'q'    -> {action:?}");
@@ -323,7 +410,9 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     let nd2 = non_default_cells(&buf2);
     if nd2 == 0 {
-        return Err("selftest FAIL: post-switch TestBackend buffer has no non-default cells".into());
+        return Err(
+            "selftest FAIL: post-switch TestBackend buffer has no non-default cells".into(),
+        );
     }
     let text2 = buffer_text_stripped(&buf2);
     if !text2.contains("PODS") {

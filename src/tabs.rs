@@ -27,7 +27,11 @@ impl<'a> Tabs<'a> {
     pub const HEIGHT: u16 = 2;
 
     pub fn new(titles: &'a [&'a str], active: usize, theme: &'a Theme) -> Self {
-        Self { titles, active, theme }
+        Self {
+            titles,
+            active,
+            theme,
+        }
     }
 }
 
@@ -58,7 +62,13 @@ impl<'a> Widget for Tabs<'a> {
 
         if area.height >= 2 {
             let line = "\u{2500}".repeat(area.width as usize);
-            buf.set_stringn(area.x, area.y + 1, &line, area.width as usize, Style::new().fg(self.theme.border));
+            buf.set_stringn(
+                area.x,
+                area.y + 1,
+                &line,
+                area.width as usize,
+                Style::new().fg(self.theme.border),
+            );
         }
     }
 }
@@ -109,7 +119,9 @@ mod tests {
         let mut buf = Buffer::empty(area);
         Tabs::new(&titles, 0, &theme).render(area, &mut buf);
 
-        let row: String = (0..area.width).map(|x| cell_at(&buf, x, 0).symbol().to_string()).collect();
+        let row: String = (0..area.width)
+            .map(|x| cell_at(&buf, x, 0).symbol().to_string())
+            .collect();
         assert!(row.contains("PROC"));
         assert!(!row.contains("proc"));
     }
@@ -138,7 +150,9 @@ mod tests {
         let area = Rect::new(0, 0, 10, 1);
         let mut buf = Buffer::empty(area);
         Tabs::new(&titles, 0, &theme).render(area, &mut buf);
-        let row: String = (0..area.width).map(|x| cell_at(&buf, x, 0).symbol().to_string()).collect();
+        let row: String = (0..area.width)
+            .map(|x| cell_at(&buf, x, 0).symbol().to_string())
+            .collect();
         assert!(row.contains("PROC"));
     }
 
@@ -153,8 +167,16 @@ mod tests {
         for cell in buf.content() {
             assert_ne!(cell.fg, Color::Rgb(0x00, 0xd9, 0xc0), "teal leaked into fg");
             assert_ne!(cell.bg, Color::Rgb(0x00, 0xd9, 0xc0), "teal leaked into bg");
-            assert_ne!(cell.fg, Color::Rgb(0xff, 0xbf, 0x00), "amber leaked into fg");
-            assert_ne!(cell.bg, Color::Rgb(0xff, 0xbf, 0x00), "amber leaked into bg");
+            assert_ne!(
+                cell.fg,
+                Color::Rgb(0xff, 0xbf, 0x00),
+                "amber leaked into fg"
+            );
+            assert_ne!(
+                cell.bg,
+                Color::Rgb(0xff, 0xbf, 0x00),
+                "amber leaked into bg"
+            );
         }
     }
 }

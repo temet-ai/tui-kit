@@ -111,8 +111,12 @@ mod tests {
         let mut cache = ImageCache::new();
         let area = Rect::new(0, 0, 20, 10);
 
-        cache.get_or_insert_with(1, false, area, &picker, || image::DynamicImage::new_rgba8(4, 4));
-        cache.get_or_insert_with(1, true, area, &picker, || image::DynamicImage::new_rgba8(4, 4));
+        cache.get_or_insert_with(1, false, area, &picker, || {
+            image::DynamicImage::new_rgba8(4, 4)
+        });
+        cache.get_or_insert_with(1, true, area, &picker, || {
+            image::DynamicImage::new_rgba8(4, 4)
+        });
         assert_eq!(cache.len(), 2);
     }
 
@@ -121,7 +125,9 @@ mod tests {
         let picker = test_picker();
         let mut cache = ImageCache::new();
         let area = Rect::new(0, 0, 20, 10);
-        cache.get_or_insert_with(1, false, area, &picker, || image::DynamicImage::new_rgba8(4, 4));
+        cache.get_or_insert_with(1, false, area, &picker, || {
+            image::DynamicImage::new_rgba8(4, 4)
+        });
         assert!(!cache.is_empty());
         cache.clear();
         assert!(cache.is_empty());

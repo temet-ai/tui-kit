@@ -172,8 +172,8 @@ pub fn fits(area: Rect, spec: FrameSpec) -> FrameMode {
         return FrameMode::Columns;
     }
 
-    let stack_fits = rest >= spec.min_middle_width
-        && content.height >= spec.min_panel_height.saturating_mul(2);
+    let stack_fits =
+        rest >= spec.min_middle_width && content.height >= spec.min_panel_height.saturating_mul(2);
     if stack_fits {
         return FrameMode::Stacked;
     }
@@ -300,7 +300,9 @@ pub fn nav_width_for<'a>(items: impl IntoIterator<Item = &'a str>) -> u16 {
         .map(|item| u16::try_from(item.chars().count()).unwrap_or(u16::MAX))
         .max()
         .unwrap_or(0);
-    longest.saturating_add(4).max(FrameSpec::DEFAULT_NAV_WIDTH / 2)
+    longest
+        .saturating_add(4)
+        .max(FrameSpec::DEFAULT_NAV_WIDTH / 2)
 }
 
 /// The rows between the two bars.
@@ -375,7 +377,10 @@ mod tests {
         assert_eq!(f.detail, Rect::new(47, 1, 33, 22));
 
         assert_eq!(f.nav.width + f.middle.width + f.detail.width, 80);
-        assert_eq!(f.middle.width, f.detail.width, "middle/detail split equally");
+        assert_eq!(
+            f.middle.width, f.detail.width,
+            "middle/detail split equally"
+        );
         assert!(!f.detail_is_modal());
         assert_within(area, &f);
     }
@@ -388,7 +393,11 @@ mod tests {
 
         assert_eq!(f.app_bar, Rect::new(0, 0, 120, 1));
         assert_eq!(f.help_bar, Rect::new(0, 39, 120, 1));
-        assert_eq!(f.nav, Rect::new(0, 1, 14, 38), "nav keeps its content width");
+        assert_eq!(
+            f.nav,
+            Rect::new(0, 1, 14, 38),
+            "nav keeps its content width"
+        );
         assert_eq!(f.middle, Rect::new(14, 1, 53, 38));
         assert_eq!(f.detail, Rect::new(67, 1, 53, 38));
         assert_eq!(f.middle.width, f.detail.width);
@@ -420,7 +429,11 @@ mod tests {
             f.middle.width, f.detail.width,
             "each keeps its full usable width"
         );
-        assert_eq!(f.detail.y, f.middle.y + f.middle.height, "no gap, no overlap");
+        assert_eq!(
+            f.detail.y,
+            f.middle.y + f.middle.height,
+            "no gap, no overlap"
+        );
         assert_within(area, &f);
     }
 
@@ -503,7 +516,10 @@ mod tests {
 
     #[test]
     fn nav_width_is_sized_to_its_longest_item() {
-        assert_eq!(nav_width_for(["services", "config", "setup", "sessions"]), 12);
+        assert_eq!(
+            nav_width_for(["services", "config", "setup", "sessions"]),
+            12
+        );
         assert_eq!(nav_width_for(["a"]), 7);
         assert_eq!(nav_width_for(std::iter::empty::<&str>()), 7);
     }

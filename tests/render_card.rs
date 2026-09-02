@@ -1,7 +1,7 @@
 //! Integration test: a real card, through the real SVG template, through
 //! the real rasterizer — the same path `CardGrid` uses at render time.
 
-use tui_kit::{Card, Theme, card_to_svg, rasterize};
+use tui_kit::{card_to_svg, rasterize, Card, Theme};
 
 #[test]
 fn temet_card_rasterizes_to_a_nonempty_image() {

@@ -22,22 +22,24 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::{CrosstermBackend, TestBackend};
 use tui_kit::ratatui::buffer::{Buffer, Cell};
 use tui_kit::ratatui::crossterm::event::{self, Event};
 use tui_kit::ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use tui_kit::ratatui::crossterm::{ExecutableCommand, execute};
+use tui_kit::ratatui::crossterm::{execute, ExecutableCommand};
 use tui_kit::ratatui::widgets::StatefulWidget;
-use tui_kit::ratatui_image::StatefulImage;
+use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui_image::picker::Picker;
 use tui_kit::ratatui_image::protocol::StatefulProtocol;
-use tui_kit::{Card, CardGrid, ImageCache, NavAction, NavState, Theme, card_to_svg, handle_key, rasterize};
+use tui_kit::ratatui_image::StatefulImage;
+use tui_kit::{
+    card_to_svg, handle_key, rasterize, Card, CardGrid, ImageCache, NavAction, NavState, Theme,
+};
 
 use notify_debouncer_full::notify::RecursiveMode;
-use notify_debouncer_full::{DebounceEventResult, new_debouncer};
+use notify_debouncer_full::{new_debouncer, DebounceEventResult};
 
 // Deprecated constructor kept for deterministic 8x16 pixel output in
 // headless paths: `Picker::halfblocks()` pins 10x20 and would change
@@ -147,7 +149,10 @@ fn print_mode() -> Result<(), Box<dyn std::error::Error>> {
     let sample = &cards[0];
 
     let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    for (focused, name) in [(true, "gallery_focused.png"), (false, "gallery_unfocused.png")] {
+    for (focused, name) in [
+        (true, "gallery_focused.png"),
+        (false, "gallery_unfocused.png"),
+    ] {
         let svg = card_to_svg(sample, &theme, focused);
         let img = rasterize(&svg, 840, Some(theme.bg_rgba()))?;
         let path = out_dir.join(name);
@@ -322,19 +327,20 @@ fn render_frame_headless(
     // The cell count is computed *inside* the caught closure (rather than
     // returning the borrowed `CompletedFrame` out of it) because a closure
     // cannot return a reference derived from its own captured `terminal`.
-    let result: Result<usize, std::convert::Infallible> = panic::catch_unwind(AssertUnwindSafe(|| {
-        let drawn = terminal.draw(|frame| {
-            let grid = CardGrid::new(cards, theme, picker, cache);
-            frame.render_stateful_widget(grid, frame.area(), nav);
-        })?;
-        Ok(drawn
-            .buffer
-            .content()
-            .iter()
-            .filter(|cell| **cell != Cell::default())
-            .count())
-    }))
-    .map_err(|_| "CardGrid render panicked inside TestBackend".to_string())?;
+    let result: Result<usize, std::convert::Infallible> =
+        panic::catch_unwind(AssertUnwindSafe(|| {
+            let drawn = terminal.draw(|frame| {
+                let grid = CardGrid::new(cards, theme, picker, cache);
+                frame.render_stateful_widget(grid, frame.area(), nav);
+            })?;
+            Ok(drawn
+                .buffer
+                .content()
+                .iter()
+                .filter(|cell| **cell != Cell::default())
+                .count())
+        }))
+        .map_err(|_| "CardGrid render panicked inside TestBackend".to_string())?;
 
     Ok(result?)
 }
@@ -370,7 +376,8 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut terminal = Terminal::new(TestBackend::new(120, 40))?;
 
-    let non_default = render_frame_headless(&mut terminal, &theme, &cards, &picker, &mut cache, &mut nav)?;
+    let non_default =
+        render_frame_headless(&mut terminal, &theme, &cards, &picker, &mut cache, &mut nav)?;
     if non_default == 0 {
         return Err("selftest FAIL: rendered TestBackend buffer has no non-default cells".into());
     }
@@ -381,12 +388,24 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     let key = |code: KeyCode| KeyEvent::new(code, KeyModifiers::NONE);
     let before = nav.selected;
     let action = handle_key(&mut nav, key(KeyCode::Down));
-    println!("selftest: Down   -> {action:?} (selected {before} -> {})", nav.selected);
-    assert_eq!(nav.selected, 3, "Down from 0 in a 3-col/5-item grid should land on index 3");
+    println!(
+        "selftest: Down   -> {action:?} (selected {before} -> {})",
+        nav.selected
+    );
+    assert_eq!(
+        nav.selected, 3,
+        "Down from 0 in a 3-col/5-item grid should land on index 3"
+    );
 
     let action = handle_key(&mut nav, key(KeyCode::Right));
-    println!("selftest: Right  -> {action:?} (selected -> {})", nav.selected);
-    assert_eq!(nav.selected, 4, "Right from 3 (a 2-wide final row) should land on index 4");
+    println!(
+        "selftest: Right  -> {action:?} (selected -> {})",
+        nav.selected
+    );
+    assert_eq!(
+        nav.selected, 4,
+        "Right from 3 (a 2-wide final row) should land on index 4"
+    );
 
     let action = handle_key(&mut nav, key(KeyCode::Enter));
     println!("selftest: Enter  -> {action:?}");
@@ -400,7 +419,8 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     println!("selftest: Esc    -> {action:?}");
     assert_eq!(action, Some(NavAction::Back), "Esc must yield Back");
 
-    let non_default = render_frame_headless(&mut terminal, &theme, &cards, &picker, &mut cache, &mut nav)?;
+    let non_default =
+        render_frame_headless(&mut terminal, &theme, &cards, &picker, &mut cache, &mut nav)?;
     if non_default == 0 {
         return Err("selftest FAIL: post-nav TestBackend buffer has no non-default cells".into());
     }
@@ -526,8 +546,9 @@ fn watch_mode(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
                             .find(|p| p.extension().is_some_and(|e| e == "svg"))
                             .and_then(|p| card_index_for_path(&cards, p))
                         {
-                            svgs[idx] = load_card_svgs(dir, std::slice::from_ref(&cards[idx]), &theme)
-                                .remove(0);
+                            svgs[idx] =
+                                load_card_svgs(dir, std::slice::from_ref(&cards[idx]), &theme)
+                                    .remove(0);
                             dirty = true;
                         }
                     }
@@ -562,7 +583,11 @@ fn watch_selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
             .as_nanos()
     ));
     dump_svg_mode(&dir)?;
-    println!("watch-selftest: dumped {} card SVGs to {}", cards.len(), dir.display());
+    println!(
+        "watch-selftest: dumped {} card SVGs to {}",
+        cards.len(),
+        dir.display()
+    );
 
     let mut svgs = load_card_svgs(&dir, &cards, &theme);
 
@@ -615,14 +640,17 @@ fn watch_selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
                     .find(|p| p.extension().is_some_and(|e| e == "svg"))
                     .and_then(|p| card_index_for_path(&cards, p))
                 {
-                    svgs[idx] = load_card_svgs(&dir, std::slice::from_ref(&cards[idx]), &theme).remove(0);
+                    svgs[idx] =
+                        load_card_svgs(&dir, std::slice::from_ref(&cards[idx]), &theme).remove(0);
                     reloaded = true;
                 }
             }
         }
     }
     if !reloaded {
-        return Err("watch-selftest FAIL: no debounced filesystem event observed within 10s".into());
+        return Err(
+            "watch-selftest FAIL: no debounced filesystem event observed within 10s".into(),
+        );
     }
     println!("watch-selftest: debounced reload observed, re-rasterizing");
 
@@ -638,7 +666,9 @@ fn watch_selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     let _ = std::fs::remove_dir_all(&dir);
 
     if frame1 == frame2 {
-        return Err("watch-selftest FAIL: rendered buffer identical before/after the SVG edit".into());
+        return Err(
+            "watch-selftest FAIL: rendered buffer identical before/after the SVG edit".into(),
+        );
     }
     println!("WATCH SELFTEST PASS");
     Ok(())

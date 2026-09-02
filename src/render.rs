@@ -138,7 +138,8 @@ pub fn rasterize(
     // supported.
     opt.image_href_resolver.resolve_string = Box::new(|_href, _opt| None);
 
-    let tree = usvg::Tree::from_str(svg, &opt).map_err(|e| RenderError::Rasterize(e.to_string()))?;
+    let tree =
+        usvg::Tree::from_str(svg, &opt).map_err(|e| RenderError::Rasterize(e.to_string()))?;
 
     let size = tree.size();
     let (base_w, base_h) = (size.width(), size.height());

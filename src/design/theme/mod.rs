@@ -277,7 +277,8 @@ impl DesignTheme {
     pub fn register_domain_slot(&mut self, name: impl Into<String>, value: SlotValue) {
         let key = name.into();
         let (r, g, b) = value.truecolor;
-        self.theme.register_token(key.clone(), OpalineColor::new(r, g, b));
+        self.theme
+            .register_token(key.clone(), OpalineColor::new(r, g, b));
         self.domain.insert(key, value);
     }
 
@@ -522,7 +523,9 @@ mod tests {
         );
 
         theme.set_tier(Tier::Mono);
-        let mono = theme.domain_style("session.live").expect("still registered");
+        let mono = theme
+            .domain_style("session.live")
+            .expect("still registered");
         assert_eq!(mono.fg, None);
         assert!(mono.add_modifier.contains(Modifier::BOLD));
     }

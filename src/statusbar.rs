@@ -28,8 +28,18 @@ impl<'a> StatusBar<'a> {
     /// Rows this widget wants: its top border hairline plus the content row.
     pub const HEIGHT: u16 = 2;
 
-    pub fn new(mode: &'a str, message: &'a str, keys: &'a [(&'a str, &'a str)], theme: &'a Theme) -> Self {
-        Self { mode, message, keys, theme }
+    pub fn new(
+        mode: &'a str,
+        message: &'a str,
+        keys: &'a [(&'a str, &'a str)],
+        theme: &'a Theme,
+    ) -> Self {
+        Self {
+            mode,
+            message,
+            keys,
+            theme,
+        }
     }
 }
 
@@ -39,7 +49,13 @@ impl<'a> Widget for StatusBar<'a> {
             return;
         }
         let line = "\u{2500}".repeat(area.width as usize);
-        buf.set_stringn(area.x, area.y, &line, area.width as usize, Style::new().fg(self.theme.border));
+        buf.set_stringn(
+            area.x,
+            area.y,
+            &line,
+            area.width as usize,
+            Style::new().fg(self.theme.border),
+        );
 
         if area.height < 2 {
             return;
@@ -52,7 +68,13 @@ impl<'a> Widget for StatusBar<'a> {
             .fg(self.theme.app)
             .bg(self.theme.accent)
             .add_modifier(Modifier::BOLD);
-        let (badge_end, _) = buf.set_stringn(area.x, y, &badge, (right_edge - area.x) as usize, badge_style);
+        let (badge_end, _) = buf.set_stringn(
+            area.x,
+            y,
+            &badge,
+            (right_edge - area.x) as usize,
+            badge_style,
+        );
         let message_start = (badge_end + 1).min(right_edge);
 
         // Key hints + the `[⌃ /] shortcuts` hint, right-aligned: built as a
@@ -65,7 +87,13 @@ impl<'a> Widget for StatusBar<'a> {
         if hints_x > message_start {
             let budget = (hints_x - message_start).saturating_sub(1) as usize;
             let message = truncate(self.message, budget);
-            buf.set_stringn(message_start, y, &message, budget, Style::new().fg(self.theme.muted));
+            buf.set_stringn(
+                message_start,
+                y,
+                &message,
+                budget,
+                Style::new().fg(self.theme.muted),
+            );
         }
 
         buf.set_line(hints_x, y, &hints, hints_width);
@@ -138,7 +166,9 @@ mod tests {
     }
 
     fn row_string(buf: &Buffer, y: u16, width: u16) -> String {
-        (0..width).map(|x| cell_at(buf, x, y).symbol().to_string()).collect()
+        (0..width)
+            .map(|x| cell_at(buf, x, y).symbol().to_string())
+            .collect()
     }
 
     #[test]
@@ -207,7 +237,9 @@ mod tests {
         assert!(row.contains("tab"));
 
         // Find the `[` of `[⌃ /]` and confirm it carries theme.info + bold.
-        let bracket_x = (0..area.width).find(|&x| cell_at(&buf, x, 1).symbol() == "[").expect("bracket cell");
+        let bracket_x = (0..area.width)
+            .find(|&x| cell_at(&buf, x, 1).symbol() == "[")
+            .expect("bracket cell");
         let cell = cell_at(&buf, bracket_x, 1);
         assert_eq!(cell.fg, theme.info);
         assert!(cell.modifier.contains(Modifier::BOLD));
@@ -218,13 +250,27 @@ mod tests {
         let theme = Theme::temet();
         let area = Rect::new(0, 0, 60, 2);
         let mut buf = Buffer::empty(area);
-        StatusBar::new("normal", "ready", &[("1-3", "tab"), ("j/k", "move")], &theme).render(area, &mut buf);
+        StatusBar::new(
+            "normal",
+            "ready",
+            &[("1-3", "tab"), ("j/k", "move")],
+            &theme,
+        )
+        .render(area, &mut buf);
 
         for cell in buf.content() {
             assert_ne!(cell.fg, Color::Rgb(0x00, 0xd9, 0xc0), "teal leaked into fg");
             assert_ne!(cell.bg, Color::Rgb(0x00, 0xd9, 0xc0), "teal leaked into bg");
-            assert_ne!(cell.fg, Color::Rgb(0xff, 0xbf, 0x00), "amber leaked into fg");
-            assert_ne!(cell.bg, Color::Rgb(0xff, 0xbf, 0x00), "amber leaked into bg");
+            assert_ne!(
+                cell.fg,
+                Color::Rgb(0xff, 0xbf, 0x00),
+                "amber leaked into fg"
+            );
+            assert_ne!(
+                cell.bg,
+                Color::Rgb(0xff, 0xbf, 0x00),
+                "amber leaked into bg"
+            );
         }
     }
 }

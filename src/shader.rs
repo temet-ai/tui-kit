@@ -133,7 +133,9 @@ fn lerp_color(a: Color, b: Color, t: f32) -> Color {
     let t = t.clamp(0.0, 1.0);
     match (a, b) {
         (Color::Rgb(ar, ag, ab), Color::Rgb(br, bg, bb)) => {
-            let mix = |x: u8, y: u8| -> u8 { (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u8 };
+            let mix = |x: u8, y: u8| -> u8 {
+                (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u8
+            };
             Color::Rgb(mix(ar, br), mix(ag, bg), mix(ab, bb))
         }
         _ => a,
@@ -163,13 +165,19 @@ mod tests {
     /// `StatefulWidget`) is the only way to test it from outside the crate.
     #[test]
     fn rendering_stays_within_theme_palette() {
-        use ratatui::Terminal;
         use ratatui::backend::TestBackend;
+        use ratatui::Terminal;
 
         let theme = Theme::temet();
-        let Color::Rgb(pr, pg, pb) = theme.panel else { panic!("theme.panel is not Rgb") };
-        let Color::Rgb(ar, ag, ab) = theme.accent else { panic!("theme.accent is not Rgb") };
-        let Color::Rgb(hr, hg, hb) = theme.accent_2 else { panic!("theme.accent_2 is not Rgb") };
+        let Color::Rgb(pr, pg, pb) = theme.panel else {
+            panic!("theme.panel is not Rgb")
+        };
+        let Color::Rgb(ar, ag, ab) = theme.accent else {
+            panic!("theme.accent is not Rgb")
+        };
+        let Color::Rgb(hr, hg, hb) = theme.accent_2 else {
+            panic!("theme.accent_2 is not Rgb")
+        };
         let lo = |x: u8, y: u8, z: u8| x.min(y).min(z);
         let hi = |x: u8, y: u8, z: u8| x.max(y).max(z);
         let (rlo, rhi) = (lo(pr, ar, hr), hi(pr, ar, hr));
@@ -188,11 +196,23 @@ mod tests {
         let mut checked = 0;
         for cell in buffer.content() {
             let Some(Color::Rgb(r, g, b)) = cell.style().bg else {
-                panic!("expected an Rgb background color, got {:?}", cell.style().bg);
+                panic!(
+                    "expected an Rgb background color, got {:?}",
+                    cell.style().bg
+                );
             };
-            assert!(r >= rlo && r <= rhi, "r={r} outside theme range [{rlo},{rhi}]");
-            assert!(g >= glo && g <= ghi, "g={g} outside theme range [{glo},{ghi}]");
-            assert!(b >= blo && b <= bhi, "b={b} outside theme range [{blo},{bhi}]");
+            assert!(
+                r >= rlo && r <= rhi,
+                "r={r} outside theme range [{rlo},{rhi}]"
+            );
+            assert!(
+                g >= glo && g <= ghi,
+                "g={g} outside theme range [{glo},{ghi}]"
+            );
+            assert!(
+                b >= blo && b <= bhi,
+                "b={b} outside theme range [{blo},{bhi}]"
+            );
             checked += 1;
         }
         assert!(checked > 0, "expected at least one cell to check");

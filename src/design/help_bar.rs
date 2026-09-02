@@ -181,7 +181,11 @@ mod tests {
         assert!(text.contains("e five"), "the fifth hint is shown: {text}");
         assert!(!text.contains("f six"), "the sixth is dropped: {text}");
         assert!(!text.contains("g seven"), "the seventh is dropped: {text}");
-        assert_eq!(text.matches('\u{b7}').count(), 4, "five hints, four separators");
+        assert_eq!(
+            text.matches('\u{b7}').count(),
+            4,
+            "five hints, four separators"
+        );
     }
 
     #[test]

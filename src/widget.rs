@@ -6,8 +6,8 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::widgets::StatefulWidget;
-use ratatui_image::StatefulImage;
 use ratatui_image::picker::Picker;
+use ratatui_image::StatefulImage;
 
 use crate::cache::ImageCache;
 use crate::card::Card;
@@ -85,17 +85,13 @@ impl<'a> StatefulWidget for CardGrid<'a> {
 
                 let theme = self.theme;
                 let picker = self.picker;
-                let protocol = self.cache.get_or_insert_with(
-                    identity,
-                    focused,
-                    sub_rect,
-                    picker,
-                    || {
-                        let svg = svg::card_to_svg(card, theme, focused);
-                        render::rasterize(&svg, target_width_px, Some(theme.bg_rgba()))
-                            .unwrap_or_else(|_| fallback_image(theme, target_width_px))
-                    },
-                );
+                let protocol =
+                    self.cache
+                        .get_or_insert_with(identity, focused, sub_rect, picker, || {
+                            let svg = svg::card_to_svg(card, theme, focused);
+                            render::rasterize(&svg, target_width_px, Some(theme.bg_rgba()))
+                                .unwrap_or_else(|_| fallback_image(theme, target_width_px))
+                        });
 
                 StatefulImage::default().render(sub_rect, buf, protocol);
             }

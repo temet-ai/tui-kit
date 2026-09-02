@@ -20,9 +20,9 @@ pub use ratatui_image;
 
 pub mod cache;
 pub mod card;
-pub mod design;
 #[cfg(feature = "input")]
 pub mod console;
+pub mod design;
 // `nav` itself stays unconditional: `NavState`/`NavAction` carry no crossterm
 // dependency and `widget::CardGrid` (portable core) uses `NavState` as its
 // `StatefulWidget::State`. Only `handle_key` (which takes a crossterm
@@ -39,13 +39,13 @@ pub mod widget;
 
 pub use cache::ImageCache;
 pub use card::{Card, CardState};
+#[cfg(feature = "input")]
+pub use console::{handle_console_key, ConsoleAction, ConsoleShell, ConsoleState};
 pub use design::{DesignTheme, Slot, Tier};
 #[cfg(feature = "input")]
-pub use console::{ConsoleAction, ConsoleShell, ConsoleState, handle_console_key};
-pub use nav::{NavAction, NavState};
-#[cfg(feature = "input")]
 pub use nav::handle_key;
-pub use render::{RenderError, rasterize};
+pub use nav::{NavAction, NavState};
+pub use render::{rasterize, RenderError};
 pub use statusbar::StatusBar;
 pub use svg::card_to_svg;
 pub use tabs::Tabs;

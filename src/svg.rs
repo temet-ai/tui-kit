@@ -34,12 +34,20 @@ const MAX_BULLETS: usize = 3;
 pub fn card_to_svg(card: &Card, theme: &Theme, focused: bool) -> String {
     let app = hex(theme.app);
     let panel = hex(theme.panel);
-    let border = if focused { hex(theme.accent) } else { hex(theme.border) };
+    let border = if focused {
+        hex(theme.accent)
+    } else {
+        hex(theme.border)
+    };
     let accent = hex(theme.accent);
     let text = hex(theme.text);
     let muted = hex(theme.muted);
     let faint = hex(theme.faint);
-    let title_color = if focused { hex(theme.accent) } else { hex(theme.muted) };
+    let title_color = if focused {
+        hex(theme.accent)
+    } else {
+        hex(theme.muted)
+    };
     let scanline_color = hex(theme.text);
 
     let panel_right = PANEL_X + PANEL_W;
@@ -62,14 +70,24 @@ pub fn card_to_svg(card: &Card, theme: &Theme, focused: bool) -> String {
     // annotation, not a second title. Focused: a darkened accent (still
     // ultraviolet, never a new literal hue). Unfocused: the theme's own
     // faintest tone.
-    let hotkey_color = if focused { hex(dim(theme.accent, 0.45)) } else { faint.clone() };
+    let hotkey_color = if focused {
+        hex(dim(theme.accent, 0.45))
+    } else {
+        faint.clone()
+    };
     let (tee_hint_span, tee_char_count) = match &hotkey_hint {
         Some(hint) => {
             let hint_text = format!("[\u{2303}{hint}] ");
             let span = format!(r#"<tspan fill="{hotkey_color}">{hint_text}</tspan>"#);
-            (span, tee_prefix.chars().count() + hint_text.chars().count() + tee_suffix.chars().count())
+            (
+                span,
+                tee_prefix.chars().count() + hint_text.chars().count() + tee_suffix.chars().count(),
+            )
         }
-        None => (String::new(), tee_prefix.chars().count() + tee_suffix.chars().count()),
+        None => (
+            String::new(),
+            tee_prefix.chars().count() + tee_suffix.chars().count(),
+        ),
     };
     let tee_text = format!("{tee_prefix}{tee_hint_span}{tee_suffix}");
     // No font metrics are loaded for this pure-string SVG builder (same
@@ -134,8 +152,16 @@ pub fn card_to_svg(card: &Card, theme: &Theme, focused: bool) -> String {
         })
         .unwrap_or_default();
 
-    let border_filter = if focused { r#" filter="url(#uvGlow)""# } else { "" };
-    let title_filter = if focused { r#" filter="url(#titleGlow)""# } else { "" };
+    let border_filter = if focused {
+        r#" filter="url(#uvGlow)""#
+    } else {
+        ""
+    };
+    let title_filter = if focused {
+        r#" filter="url(#titleGlow)""#
+    } else {
+        ""
+    };
 
     format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="{cw}" height="{ch}" viewBox="0 0 {cw} {ch}">
@@ -350,7 +376,10 @@ mod tests {
         for focused in [false, true] {
             let svg = card_to_svg(&sample(), &theme, focused);
             assert!(!svg.contains("#00d9c0"), "teal literal leaked into SVG");
-            assert!(!svg.contains("#ffbf00") && !svg.contains("#ffb000"), "amber literal leaked into SVG");
+            assert!(
+                !svg.contains("#ffbf00") && !svg.contains("#ffb000"),
+                "amber literal leaked into SVG"
+            );
         }
     }
 }

@@ -10,12 +10,15 @@
 //! small card set — same pattern `tests/stands_up.rs` already uses relative
 //! to `examples/gallery.rs`.
 
-use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::TestBackend;
 use tui_kit::ratatui::buffer::{Buffer, Cell};
 use tui_kit::ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui_image::picker::Picker;
-use tui_kit::{Card, ConsoleAction, ConsoleShell, ConsoleState, ImageCache, NavAction, Theme, handle_console_key};
+use tui_kit::{
+    handle_console_key, Card, ConsoleAction, ConsoleShell, ConsoleState, ImageCache, NavAction,
+    Theme,
+};
 
 const COLUMNS: usize = 2;
 const KEY_HINTS: [(&str, &str); 2] = [("1-3", "tab"), ("j/k", "move")];
@@ -71,7 +74,10 @@ fn buffer_text_stripped(buf: &Buffer) -> String {
 }
 
 fn non_default_cells(buf: &Buffer) -> usize {
-    buf.content().iter().filter(|cell| **cell != Cell::default()).count()
+    buf.content()
+        .iter()
+        .filter(|cell| **cell != Cell::default())
+        .count()
 }
 
 /// Render one frame of the real `ConsoleShell` `StatefulWidget` into
@@ -86,7 +92,15 @@ fn render_frame(
 ) -> Buffer {
     let completed = terminal
         .draw(|frame| {
-            let shell = ConsoleShell::new(tab_cards, theme, picker, cache, "normal", "console ready", &KEY_HINTS);
+            let shell = ConsoleShell::new(
+                tab_cards,
+                theme,
+                picker,
+                cache,
+                "normal",
+                "console ready",
+                &KEY_HINTS,
+            );
             frame.render_stateful_widget(shell, frame.area(), state);
         })
         .expect("ConsoleShell must render into a TestBackend without an IO error");
@@ -102,7 +116,14 @@ fn console_shell_renders_chrome_and_a_nonempty_frame_headlessly() {
     let mut state = ConsoleState::new(&[3, 3, 3], COLUMNS);
     let mut terminal = Terminal::new(TestBackend::new(140, 44)).expect("TestBackend terminal");
 
-    let buf = render_frame(&mut terminal, &cards, &theme, &picker, &mut cache, &mut state);
+    let buf = render_frame(
+        &mut terminal,
+        &cards,
+        &theme,
+        &picker,
+        &mut cache,
+        &mut state,
+    );
 
     assert!(
         non_default_cells(&buf) > 0,
@@ -111,7 +132,10 @@ fn console_shell_renders_chrome_and_a_nonempty_frame_headlessly() {
 
     let text = buffer_text_stripped(&buf);
     for needle in ["TEMET", "PROC", "PODS", "API", "NORMAL"] {
-        assert!(text.contains(needle), "rendered buffer is missing {needle:?}\n---\n{text}");
+        assert!(
+            text.contains(needle),
+            "rendered buffer is missing {needle:?}\n---\n{text}"
+        );
     }
 }
 
@@ -148,18 +172,30 @@ fn switching_tabs_preserves_each_tabs_own_selection() {
 
     handle_console_key(&mut state, key(KeyCode::Char('2')));
     assert_eq!(state.active_tab, 1);
-    assert_eq!(state.navs[1].selected, 0, "a freshly-switched-to tab starts at its own selection, not tab 0's");
+    assert_eq!(
+        state.navs[1].selected, 0,
+        "a freshly-switched-to tab starts at its own selection, not tab 0's"
+    );
 
     handle_console_key(&mut state, key(KeyCode::Char('1')));
     assert_eq!(state.active_tab, 0);
-    assert_eq!(state.navs[0].selected, 1, "returning to tab 0 must keep its earlier selection");
+    assert_eq!(
+        state.navs[0].selected, 1,
+        "returning to tab 0 must keep its earlier selection"
+    );
 }
 
 #[test]
 fn q_and_esc_quit() {
     let mut state = ConsoleState::new(&[3, 3, 3], COLUMNS);
-    assert_eq!(handle_console_key(&mut state, key(KeyCode::Char('q'))), Some(ConsoleAction::Quit));
-    assert_eq!(handle_console_key(&mut state, key(KeyCode::Esc)), Some(ConsoleAction::Quit));
+    assert_eq!(
+        handle_console_key(&mut state, key(KeyCode::Char('q'))),
+        Some(ConsoleAction::Quit)
+    );
+    assert_eq!(
+        handle_console_key(&mut state, key(KeyCode::Esc)),
+        Some(ConsoleAction::Quit)
+    );
 }
 
 #[test]
@@ -171,20 +207,43 @@ fn real_key_sequence_navigates_switches_tabs_and_renders_after() {
     let mut state = ConsoleState::new(&[3, 3, 3], COLUMNS);
     let mut terminal = Terminal::new(TestBackend::new(140, 44)).expect("TestBackend terminal");
 
-    render_frame(&mut terminal, &cards, &theme, &picker, &mut cache, &mut state);
+    render_frame(
+        &mut terminal,
+        &cards,
+        &theme,
+        &picker,
+        &mut cache,
+        &mut state,
+    );
 
-    assert_eq!(handle_console_key(&mut state, key(KeyCode::Char('2'))), Some(ConsoleAction::Tab(1)));
+    assert_eq!(
+        handle_console_key(&mut state, key(KeyCode::Char('2'))),
+        Some(ConsoleAction::Tab(1))
+    );
     assert_eq!(
         handle_console_key(&mut state, key(KeyCode::Right)),
         Some(ConsoleAction::Nav(NavAction::Focus(1)))
     );
-    assert_eq!(handle_console_key(&mut state, key(KeyCode::Char('q'))), Some(ConsoleAction::Quit));
+    assert_eq!(
+        handle_console_key(&mut state, key(KeyCode::Char('q'))),
+        Some(ConsoleAction::Quit)
+    );
 
-    let buf = render_frame(&mut terminal, &cards, &theme, &picker, &mut cache, &mut state);
+    let buf = render_frame(
+        &mut terminal,
+        &cards,
+        &theme,
+        &picker,
+        &mut cache,
+        &mut state,
+    );
     assert!(
         non_default_cells(&buf) > 0,
         "a second ConsoleShell render after tab-switch + nav must still paint non-default cells"
     );
     let text = buffer_text_stripped(&buf);
-    assert!(text.contains("PODS"), "post-switch frame should still show the PODS tab label");
+    assert!(
+        text.contains("PODS"),
+        "post-switch frame should still show the PODS tab label"
+    );
 }

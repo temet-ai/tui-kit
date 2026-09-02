@@ -341,7 +341,9 @@ mod tests {
         let theme = DesignTheme::with_tier(Tier::Mono);
         let area = Rect::new(0, 0, 24, 6);
         let mut buf = Buffer::empty(area);
-        Panel::new("stack", &theme).focused(true).render(area, &mut buf);
+        Panel::new("stack", &theme)
+            .focused(true)
+            .render(area, &mut buf);
         for y in 0..area.height {
             for x in 0..area.width {
                 let cell = &buf[(x, y)];

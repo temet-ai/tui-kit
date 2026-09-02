@@ -11,12 +11,12 @@
 //! sequence — exactly what a `TestBackend` can render, so this exercises
 //! `CardGrid`'s real image path, not a stub.
 
-use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::TestBackend;
 use tui_kit::ratatui::buffer::Cell;
 use tui_kit::ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui_image::picker::Picker;
-use tui_kit::{Card, CardGrid, ImageCache, NavAction, NavState, Theme, handle_key};
+use tui_kit::{handle_key, Card, CardGrid, ImageCache, NavAction, NavState, Theme};
 
 const COLUMNS: usize = 3;
 

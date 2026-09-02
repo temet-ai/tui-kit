@@ -56,6 +56,6 @@ pub mod select;
 pub mod theme;
 
 pub use help_bar::{HelpBar, KeyHint};
-pub use layout::{frame, fits, AppBar, Frame, FrameMode, FrameSpec};
+pub use layout::{fits, frame, AppBar, Frame, FrameMode, FrameSpec};
 pub use panel::Panel;
 pub use theme::{DesignTheme, Slot, SlotValue, TerminalEnv, Tier};

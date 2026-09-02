@@ -9,16 +9,16 @@
 use std::io;
 use std::time::Duration;
 
-use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::CrosstermBackend;
 use tui_kit::ratatui::crossterm::event::{self, Event, KeyCode};
 use tui_kit::ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use tui_kit::ratatui::crossterm::{ExecutableCommand, execute};
+use tui_kit::ratatui::crossterm::{execute, ExecutableCommand};
 use tui_kit::ratatui::layout::Alignment;
 use tui_kit::ratatui::text::Line;
 use tui_kit::ratatui::widgets::Paragraph;
+use tui_kit::ratatui::Terminal;
 use tui_kit::shader::{temet_canvas, temet_state};
 use tui_kit::theme::Theme;
 
@@ -48,7 +48,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     result
 }
 
-fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), Box<dyn std::error::Error>> {
+fn run(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let theme = Theme::temet();
     let mut state = temet_state();
 

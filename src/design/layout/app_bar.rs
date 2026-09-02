@@ -143,7 +143,10 @@ mod tests {
         assert_eq!(full, "mike / sessions / a1b2c3d4 / request 138469");
 
         let narrow = render(&path, &theme, 30);
-        assert!(narrow.ends_with("request 138469"), "kept the tail: {narrow}");
+        assert!(
+            narrow.ends_with("request 138469"),
+            "kept the tail: {narrow}"
+        );
         assert!(!narrow.contains('\u{2026}'), "elided: {narrow}");
         assert!(narrow.chars().count() <= 30, "overflowed: {narrow}");
     }
