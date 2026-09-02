@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tui-kit — temet card gallery</title>
+    <!-- Trunk builds the sibling Cargo.toml to wasm and injects the glue. -->
+    <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="s" />
+    <style>
+      /* The palette here only frames the canvas; every color inside the
+         terminal grid comes from tui_kit::Theme::temet() at render time. */
+      :root {
+        --app: #08060f;
+        --text: #dcd6ec;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--app);
+        color: var(--text);
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* Ratzilla's DomBackend paints one <span> per cell inside #grid. The
+         cell box has to match the 10x20 font size Picker::halfblocks() states
+         in src/main.rs, or the cards come out stretched: the rasterizer sizes
+         each card image for a 1:2 cell, and the browser has to draw it in one.
+         17px monospace advances ~10.2px; line-height pins the other axis. */
+      #grid {
+        font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+        font-size: 17px;
+        line-height: 20px;
+        letter-spacing: 0;
+        white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="grid"></div>
+  </body>
+</html>

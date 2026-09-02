@@ -9,8 +9,11 @@ description = "Image-based cyberpunk card-navigation toolset for ratatui TUIs (S
 # Re-exported at the crate root (`pub use ratatui;` / `pub use ratatui_image;`)
 # so downstream consumers build against tui-kit's own pinned versions of the
 # `Buffer`/protocol types instead of risking a version-skewed direct dep.
-ratatui = "0.29"
-ratatui-image = "8"
+# `default-features = false`: the `crossterm` feature (input backend + event
+# types) is supplied only via our own `input` feature below, so a caller who
+# wants the portable core (no crossterm) can opt out of it.
+ratatui = { version = "0.30", default-features = false }
+ratatui-image = { version = "11", default-features = false }
 image = "0.25"
 
 # Vendored SVG -> PNG rasterizer. `resvg` re-exports the exact `usvg` and
@@ -23,6 +26,32 @@ fontdb = "0.23"
 usvg = "0.47"
 thiserror = "2"
 
+# Optional GPU-shader backend for a later unit of work; stubbed here only
+# (src/shader.rs) so the crate compiles with the feature declared.
+tui-shader = { version = "=0.0.10", optional = true }
+
+[dev-dependencies]
+notify = "8.2"
+notify-debouncer-full = "0.7"
+
+[features]
+default = ["input"]
+# Terminal input/event handling (crossterm) for both ratatui and
+# ratatui-image, plus the modules that depend on it (`nav`, `console`).
+input = ["ratatui/crossterm", "ratatui-image/crossterm"]
+shader = ["dep:tui-shader"]
+
 [[example]]
 name = "gallery"
 path = "examples/gallery.rs"
+required-features = ["input"]
+
+[[example]]
+name = "console"
+path = "examples/console.rs"
+required-features = ["input"]
+
+[[example]]
+name = "shader"
+path = "examples/shader.rs"
+required-features = ["shader"]

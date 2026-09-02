@@ -18,18 +18,34 @@
 //! `SELFTEST PASS` and exiting 0 on success.
 
 use std::io;
+use std::path::{Path, PathBuf};
+use std::sync::mpsc::channel;
 use std::time::Duration;
 
 use tui_kit::ratatui::Terminal;
 use tui_kit::ratatui::backend::{CrosstermBackend, TestBackend};
-use tui_kit::ratatui::buffer::Cell;
+use tui_kit::ratatui::buffer::{Buffer, Cell};
 use tui_kit::ratatui::crossterm::event::{self, Event};
 use tui_kit::ratatui::crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use tui_kit::ratatui::crossterm::{ExecutableCommand, execute};
+use tui_kit::ratatui::widgets::StatefulWidget;
+use tui_kit::ratatui_image::StatefulImage;
 use tui_kit::ratatui_image::picker::Picker;
+use tui_kit::ratatui_image::protocol::StatefulProtocol;
 use tui_kit::{Card, CardGrid, ImageCache, NavAction, NavState, Theme, card_to_svg, handle_key, rasterize};
+
+use notify_debouncer_full::notify::RecursiveMode;
+use notify_debouncer_full::{DebounceEventResult, new_debouncer};
+
+// Deprecated constructor kept for deterministic 8x16 pixel output in
+// headless paths: `Picker::halfblocks()` pins 10x20 and would change
+// rendered output.
+#[allow(deprecated)]
+fn headless_picker() -> Picker {
+    Picker::from_fontsize((8, 16).into())
+}
 
 fn sample_cards() -> Vec<Card> {
     vec![
@@ -94,16 +110,33 @@ fn sample_cards() -> Vec<Card> {
 const COLUMNS: usize = 3;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    if std::env::args().any(|a| a == "--print") {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--print") {
         return print_mode();
     }
-    if std::env::args().any(|a| a == "--grid") {
+    if args.iter().any(|a| a == "--grid") {
         return grid_mode();
     }
-    if std::env::args().any(|a| a == "--selftest") {
+    if args.iter().any(|a| a == "--selftest") {
         return selftest_mode();
     }
+    if let Some(dir) = arg_value(&args, "--dump-svg") {
+        return dump_svg_mode(Path::new(&dir));
+    }
+    if let Some(dir) = arg_value(&args, "--watch") {
+        return watch_mode(Path::new(&dir));
+    }
+    if args.iter().any(|a| a == "--watch-selftest") {
+        return watch_selftest_mode();
+    }
     interactive_mode()
+}
+
+/// Value of the flag `name` (e.g. `--watch <dir>`): the argument immediately
+/// following it, if present.
+fn arg_value(args: &[String], name: &str) -> Option<String> {
+    let idx = args.iter().position(|a| a == name)?;
+    args.get(idx + 1).cloned()
 }
 
 /// Headless visual evidence: rasterize one focused and one unfocused sample
@@ -150,19 +183,31 @@ const GRID_GAP: f32 = 16.0;
 /// pick a raster scale.
 fn compose_grid_svg(cards: &[Card], theme: &Theme, nav: &NavState) -> (String, f32) {
     let columns = nav.columns.max(1);
-    let rows = cards.len().div_ceil(columns);
+    let card_svgs: Vec<String> = cards
+        .iter()
+        .enumerate()
+        .map(|(idx, card)| card_to_svg(card, theme, idx == nav.selected))
+        .collect();
+    compose_grid_svg_from(&card_svgs, columns, theme)
+}
+
+/// Same tiling as [`compose_grid_svg`], but taking already-rendered per-card
+/// SVG markup directly instead of generating it from `Card`/`Theme` — this
+/// is what lets `--watch` mode splice in SVGs loaded from disk (or reloaded
+/// after an edit) without touching `card_to_svg` at all.
+fn compose_grid_svg_from(card_svgs: &[String], columns: usize, theme: &Theme) -> (String, f32) {
+    let columns = columns.max(1);
+    let rows = card_svgs.len().div_ceil(columns);
     let page_w = GRID_GAP + columns as f32 * (CARD_W + GRID_GAP);
     let page_h = GRID_GAP + rows as f32 * (CARD_H + GRID_GAP);
     let bg = hex_rgba(theme.bg_rgba());
 
     let mut body = String::new();
-    for (idx, card) in cards.iter().enumerate() {
+    for (idx, card_svg) in card_svgs.iter().enumerate() {
         let col = idx % columns;
         let row = idx / columns;
         let x = GRID_GAP + col as f32 * (CARD_W + GRID_GAP);
         let y = GRID_GAP + row as f32 * (CARD_H + GRID_GAP);
-        let focused = idx == nav.selected;
-        let card_svg = card_to_svg(card, theme, focused);
         let placed = card_svg.replacen("<svg ", &format!("<svg x=\"{x}\" y=\"{y}\" "), 1);
         body.push_str(&placed);
         body.push('\n');
@@ -218,7 +263,7 @@ fn interactive_mode() -> Result<(), Box<dyn std::error::Error>> {
 
     let theme = Theme::temet();
     let cards = sample_cards();
-    let picker = Picker::from_query_stdio().unwrap_or_else(|_| Picker::from_fontsize((8, 16)));
+    let picker = Picker::from_query_stdio().unwrap_or_else(|_| headless_picker());
     let mut cache = ImageCache::new();
     let mut nav = NavState::new(cards.len(), COLUMNS);
 
@@ -277,7 +322,7 @@ fn render_frame_headless(
     // The cell count is computed *inside* the caught closure (rather than
     // returning the borrowed `CompletedFrame` out of it) because a closure
     // cannot return a reference derived from its own captured `terminal`.
-    let result: io::Result<usize> = panic::catch_unwind(AssertUnwindSafe(|| {
+    let result: Result<usize, std::convert::Infallible> = panic::catch_unwind(AssertUnwindSafe(|| {
         let drawn = terminal.draw(|frame| {
             let grid = CardGrid::new(cards, theme, picker, cache);
             frame.render_stateful_widget(grid, frame.area(), nav);
@@ -313,7 +358,7 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     let theme = Theme::temet();
     let cards = sample_cards();
     let mut cache = ImageCache::new();
-    let picker = Picker::from_fontsize((8, 16));
+    let picker = headless_picker();
     let mut nav = NavState::new(cards.len(), COLUMNS);
 
     println!(
@@ -365,5 +410,236 @@ fn selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     println!("SELFTEST PASS");
+    Ok(())
+}
+
+// ---------------------------------------------------------------------
+// Hot-reload design loop: --dump-svg / --watch / --watch-selftest
+// ---------------------------------------------------------------------
+
+/// Path a card's editable SVG lives at inside a watch/dump directory —
+/// keyed by `card.tag` so the file name is stable and human-legible.
+fn card_svg_path(dir: &Path, card: &Card) -> PathBuf {
+    dir.join(format!("{}.svg", card.tag))
+}
+
+/// `--dump-svg <dir>`: write each sample card's freshly generated
+/// (unfocused) SVG to `<dir>/<tag>.svg` and exit. This is the other half of
+/// the design loop: open one of these files in an editor, then run
+/// `--watch <dir>` to see edits reflected live.
+fn dump_svg_mode(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(dir)?;
+    let theme = Theme::temet();
+    let cards = sample_cards();
+    for card in &cards {
+        let svg = card_to_svg(card, &theme, false);
+        let path = card_svg_path(dir, card);
+        std::fs::write(&path, &svg)?;
+        println!("{}", path.display());
+    }
+    Ok(())
+}
+
+/// Load every sample card's SVG from `dir` (as written by `--dump-svg`),
+/// falling back to a freshly generated one for any card whose file is
+/// missing or unreadable.
+fn load_card_svgs(dir: &Path, cards: &[Card], theme: &Theme) -> Vec<String> {
+    cards
+        .iter()
+        .map(|card| {
+            let path = card_svg_path(dir, card);
+            std::fs::read_to_string(&path).unwrap_or_else(|_| card_to_svg(card, theme, false))
+        })
+        .collect()
+}
+
+/// Rebuild the composed grid image (all cards tiled per `COLUMNS`) from the
+/// current `svgs`, and encode it into a `ratatui-image` protocol via
+/// `picker`.
+fn build_grid_protocol(
+    svgs: &[String],
+    theme: &Theme,
+    picker: &Picker,
+    target_width_px: u32,
+) -> Result<StatefulProtocol, Box<dyn std::error::Error>> {
+    let (svg, _page_w) = compose_grid_svg_from(svgs, COLUMNS, theme);
+    let img = rasterize(&svg, target_width_px, Some(theme.bg_rgba()))?;
+    Ok(picker.new_resize_protocol(img))
+}
+
+/// Match a changed-file path from a debounced notify event back to the
+/// sample-card index it belongs to, by comparing file stems against
+/// `card.tag` (the same key `card_svg_path` writes by).
+fn card_index_for_path(cards: &[Card], path: &Path) -> Option<usize> {
+    let stem = path.file_stem()?.to_str()?;
+    cards.iter().position(|card| card.tag == stem)
+}
+
+/// `--watch <dir>`: load card SVGs from `dir` (falling back to generated
+/// ones), watch `dir` with a debounced `notify` watcher, and on any `.svg`
+/// change reload that card's markup and re-render the composed grid into
+/// the real terminal — the design loop is: edit an SVG in an editor next to
+/// this running process, and the terminal updates.
+fn watch_mode(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(dir)?;
+    let theme = Theme::temet();
+    let cards = sample_cards();
+    let mut svgs = load_card_svgs(dir, &cards, &theme);
+
+    let (tx, rx) = channel::<DebounceEventResult>();
+    let mut debouncer = new_debouncer(Duration::from_millis(300), None, tx)?;
+    debouncer.watch(dir, RecursiveMode::NonRecursive)?;
+
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    let picker = Picker::from_query_stdio().unwrap_or_else(|_| headless_picker());
+    let (_svg, page_w) = compose_grid_svg_from(&svgs, COLUMNS, &theme);
+    let target_width_px = (page_w * 2.1) as u32;
+    let mut protocol = build_grid_protocol(&svgs, &theme, &picker, target_width_px)?;
+
+    let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+        loop {
+            terminal.draw(|frame| {
+                StatefulImage::default().render(frame.area(), frame.buffer_mut(), &mut protocol);
+            })?;
+
+            if event::poll(Duration::from_millis(100))? {
+                if let Event::Key(key) = event::read()? {
+                    use tui_kit::ratatui::crossterm::event::KeyCode;
+                    if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
+                        return Ok(());
+                    }
+                }
+            }
+
+            let mut dirty = false;
+            while let Ok(result) = rx.try_recv() {
+                if let Ok(events) = result {
+                    for event in events {
+                        if let Some(idx) = event
+                            .paths
+                            .iter()
+                            .find(|p| p.extension().is_some_and(|e| e == "svg"))
+                            .and_then(|p| card_index_for_path(&cards, p))
+                        {
+                            svgs[idx] = load_card_svgs(dir, std::slice::from_ref(&cards[idx]), &theme)
+                                .remove(0);
+                            dirty = true;
+                        }
+                    }
+                }
+            }
+            if dirty {
+                protocol = build_grid_protocol(&svgs, &theme, &picker, target_width_px)?;
+            }
+        }
+    })();
+
+    disable_raw_mode()?;
+    io::stdout().execute(LeaveAlternateScreen)?;
+    result
+}
+
+/// `--watch-selftest`: fully headless scripted proof of the hot-reload
+/// loop. Dumps SVGs to a temp dir, starts the debounced watcher, renders
+/// once via `TestBackend`, programmatically edits one SVG on disk, waits
+/// for the debounced event, re-renders, and asserts the rendered buffer
+/// changed. Prints `WATCH SELFTEST PASS` and returns `Ok(())` (exit 0) on
+/// success; otherwise returns `Err` (exit non-zero) describing the failure.
+fn watch_selftest_mode() -> Result<(), Box<dyn std::error::Error>> {
+    let theme = Theme::temet();
+    let cards = sample_cards();
+
+    let dir = std::env::temp_dir().join(format!(
+        "tui-kit-gallery-watch-selftest-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos()
+    ));
+    dump_svg_mode(&dir)?;
+    println!("watch-selftest: dumped {} card SVGs to {}", cards.len(), dir.display());
+
+    let mut svgs = load_card_svgs(&dir, &cards, &theme);
+
+    let (tx, rx) = channel::<DebounceEventResult>();
+    let mut debouncer = new_debouncer(Duration::from_millis(200), None, tx)?;
+    debouncer.watch(&dir, RecursiveMode::NonRecursive)?;
+
+    let picker = headless_picker();
+    let (_svg, page_w) = compose_grid_svg_from(&svgs, COLUMNS, &theme);
+    let target_width_px = (page_w * 2.1) as u32;
+
+    let mut terminal = Terminal::new(TestBackend::new(160, 60))?;
+    let mut protocol = build_grid_protocol(&svgs, &theme, &picker, target_width_px)?;
+    let frame1: Buffer = terminal
+        .draw(|frame| {
+            StatefulImage::default().render(frame.area(), frame.buffer_mut(), &mut protocol);
+        })?
+        .buffer
+        .clone();
+    println!("watch-selftest: frame 1 rendered");
+
+    // Programmatically edit one card's SVG on disk: swap its title text
+    // for a distinguishable edited string, exactly the "edit in an editor"
+    // step a human would perform.
+    let edited_card = &cards[0];
+    let path = card_svg_path(&dir, edited_card);
+    let original = std::fs::read_to_string(&path)?;
+    let edited = original.replacen(&edited_card.title, "EDITED TITLE", 1);
+    if edited == original {
+        return Err(format!(
+            "watch-selftest FAIL: card title {:?} not found verbatim in its own dumped SVG",
+            edited_card.title
+        )
+        .into());
+    }
+    std::fs::write(&path, &edited)?;
+    println!("watch-selftest: edited {} on disk", path.display());
+
+    // Wait for the debounced event referencing the edited card, with a
+    // generous overall timeout so a slow CI filesystem-watcher backend
+    // doesn't flake this out.
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    let mut reloaded = false;
+    while std::time::Instant::now() < deadline && !reloaded {
+        if let Ok(Ok(events)) = rx.recv_timeout(Duration::from_millis(250)) {
+            for event in events {
+                if let Some(idx) = event
+                    .paths
+                    .iter()
+                    .find(|p| p.extension().is_some_and(|e| e == "svg"))
+                    .and_then(|p| card_index_for_path(&cards, p))
+                {
+                    svgs[idx] = load_card_svgs(&dir, std::slice::from_ref(&cards[idx]), &theme).remove(0);
+                    reloaded = true;
+                }
+            }
+        }
+    }
+    if !reloaded {
+        return Err("watch-selftest FAIL: no debounced filesystem event observed within 10s".into());
+    }
+    println!("watch-selftest: debounced reload observed, re-rasterizing");
+
+    let mut protocol2 = build_grid_protocol(&svgs, &theme, &picker, target_width_px)?;
+    let frame2: Buffer = terminal
+        .draw(|frame| {
+            StatefulImage::default().render(frame.area(), frame.buffer_mut(), &mut protocol2);
+        })?
+        .buffer
+        .clone();
+    println!("watch-selftest: frame 2 rendered");
+
+    let _ = std::fs::remove_dir_all(&dir);
+
+    if frame1 == frame2 {
+        return Err("watch-selftest FAIL: rendered buffer identical before/after the SVG edit".into());
+    }
+    println!("WATCH SELFTEST PASS");
     Ok(())
 }

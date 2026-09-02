@@ -1,0 +1,59 @@
+# Standalone crate on purpose: the empty `[workspace]` table below stops the
+# repo-root `cargo` from ever pulling this member into its build graph, so the
+# native crate keeps its crossterm-backed default features while this one
+# builds for wasm32-unknown-unknown with the portable core only.
+[workspace]
+
+[package]
+name = "web-gallery"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+description = "Ratzilla browser demo: the temet card gallery rendered as halfblock cells in a WASM terminal"
+
+[dependencies]
+# `default-features = false` drops tui-kit's `input` feature, which pulls in
+# crossterm — crossterm does not compile for wasm32-unknown-unknown. What is
+# left is the portable core: theme/svg/card/render/cache/widget (+ the
+# crossterm-free half of `nav`).
+tui-kit = { path = "..", default-features = false }
+
+ratzilla = "0.3.1"
+
+# Routes Rust panic messages to the browser console; without it a panic in the
+# wasm module reads only as `RuntimeError: unreachable`. Already in the graph
+# via ratzilla, so this adds no new compilation.
+console_error_panic_hook = "0.1"
+
+# wasm32-unknown-unknown has no OS entropy source, and getrandom 0.2 answers
+# that with a hard compile error unless the `js` feature points it at
+# `crypto.getRandomValues`. Not used directly here — it arrives under
+# ratatui-image via rand 0.8 — but a feature can only be turned on by a
+# dependent, so this crate has to name it. Declared as its own line rather than
+# through a version-bumped alias because 0.2 is the version actually in the
+# graph.
+getrandom = { version = "0.2", features = ["js"] }
+
+# `ratatui-core` reaches for `critical-section` on targets without atomics,
+# which wasm32-unknown-unknown is. The crate only declares the `acquire`/
+# `release` externs — some dependent has to supply an implementation, or the
+# link step fails on `undefined symbol: _critical_section_1_0_acquire`. The
+# `std` implementation is the right one here: wasm in the browser is
+# single-threaded, so its lock is uncontended.
+critical-section = { version = "1", features = ["std"] }
+
+# `ratatui-image` depends on `rustix` for every `cfg(not(windows))` target,
+# which includes wasm32-unknown-unknown — and rustix 0.38 has no backend there,
+# so its `errno` dependency hard-`compile_error!`s before any of our code
+# compiles. No feature selection here or in tui-kit avoids it. The stub below
+# supplies the four terminal APIs ratatui-image references (all tty-only, all
+# meaningless in a browser); see its lib.rs header for the full rationale and
+# the upstream change that would retire it. The patch is scoped to this
+# standalone workspace, so the native tui-kit build keeps the real rustix.
+[patch.crates-io]
+rustix = { path = "vendor/rustix-wasm-shim" }
+
+[profile.release]
+opt-level = "s"
+lto = true

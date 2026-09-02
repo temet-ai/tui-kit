@@ -1,14 +1,28 @@
 # tui-kit
 
-An image-based, temet-styled card-navigation toolset for [ratatui](https://ratatui.rs) TUIs.
-Cards are not drawn with box-drawing cells — each card is authored as SVG, rasterized to a
-PNG through a vendored `resvg`/`tiny-skia` pipeline, and placed inline into the terminal
-with [`ratatui-image`](https://docs.rs/ratatui-image). First consumer: the "mike" system;
-built to be dropped into any other ratatui TUI unchanged.
+`tui-kit` is the reusable home of **TUI Design**, the normative, application-neutral
+contract for Ratatui interfaces. Start with:
 
-## Image-primary, with a real fallback
+- [`docs/tui/STYLE_GUIDE.md`](docs/tui/STYLE_GUIDE.md) — normative TUI Design rules
+- [`docs/tui/LAYOUT.md`](docs/tui/LAYOUT.md) — the one universal layout
+- [`docs/tui/PANELS.md`](docs/tui/PANELS.md) — editable proposal worksheet for the next
+  panel-internal geometry phase; not normative
+- [`docs/tui/REFERENCES.md`](docs/tui/REFERENCES.md) — sources and implementation references
 
-The visual look — temet's sharp-edged design system: violet-black surfaces, 1px hairline
+The Rust crate is an implementation library that is still being brought into conformance
+with TUI Design. Existing widgets are **not automatically conformant merely because they
+live in this repository**. Conformance is established against the normative documentation
+and verified rendered behavior.
+
+The current implementation began as an image-based, TEMET-styled card-navigation toolset
+for [Ratatui](https://ratatui.rs) TUIs. Cards are authored as SVG, rasterized to PNG through
+a vendored `resvg`/`tiny-skia` pipeline, and placed inline with
+[`ratatui-image`](https://docs.rs/ratatui-image). This describes the current crate, not the
+normative direction of TUI Design.
+
+## Current image-primary implementation
+
+The current visual look — TEMET's sharp-edged design system: violet-black surfaces, 1px hairline
 borders (radius 0, no rounding/bevels), a UV-purple focus glow, corner reticle ticks, and an
 on-border title tee — lives entirely in `src/svg.rs`, not in styled `Span`s. `render::rasterize`
 turns that SVG into a

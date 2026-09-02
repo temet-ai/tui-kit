@@ -62,7 +62,7 @@ impl<'a> StatefulWidget for CardGrid<'a> {
             .constraints(vec![Constraint::Ratio(1, rows as u32); rows])
             .split(area);
 
-        let (font_w, _font_h) = self.picker.font_size();
+        let font_w = self.picker.font_size().width;
 
         for row in 0..rows {
             let row_area = row_areas[row];

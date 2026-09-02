@@ -37,6 +37,14 @@ fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)
 }
 
+// Deprecated constructor kept for deterministic 8x16 pixel output in
+// headless paths: `Picker::halfblocks()` pins 10x20 and would change
+// rendered output.
+#[allow(deprecated)]
+fn headless_picker() -> Picker {
+    Picker::from_fontsize((8, 16).into())
+}
+
 /// Render one frame of the real `CardGrid` `StatefulWidget` into `terminal`
 /// and return how many buffer cells are non-default, so tests can assert
 /// the image path actually painted something rather than staying blank.
@@ -67,7 +75,7 @@ fn card_grid_renders_a_nonempty_frame_headlessly() {
     let theme = Theme::temet();
     let cards = sample_cards();
     let mut cache = ImageCache::new();
-    let picker = Picker::from_fontsize((8, 16));
+    let picker = headless_picker();
     let mut nav = NavState::new(cards.len(), COLUMNS);
     let mut terminal = Terminal::new(TestBackend::new(120, 40)).expect("TestBackend terminal");
 
@@ -83,7 +91,7 @@ fn real_handle_key_sequence_navigates_and_renders_after() {
     let theme = Theme::temet();
     let cards = sample_cards();
     let mut cache = ImageCache::new();
-    let picker = Picker::from_fontsize((8, 16));
+    let picker = headless_picker();
     let mut nav = NavState::new(cards.len(), COLUMNS);
     let mut terminal = Terminal::new(TestBackend::new(120, 40)).expect("TestBackend terminal");
 

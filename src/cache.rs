@@ -75,9 +75,17 @@ impl ImageCache {
 mod tests {
     use super::*;
 
+    // Deprecated constructor kept for deterministic 8x16 pixel output in
+    // headless paths: `Picker::halfblocks()` pins 10x20 and would change
+    // rendered output.
+    #[allow(deprecated)]
+    fn test_picker() -> Picker {
+        Picker::from_fontsize((8, 16).into())
+    }
+
     #[test]
     fn cache_hit_does_not_rebuild() {
-        let picker = Picker::from_fontsize((8, 16));
+        let picker = test_picker();
         let mut cache = ImageCache::new();
         let area = Rect::new(0, 0, 20, 10);
 
@@ -99,7 +107,7 @@ mod tests {
 
     #[test]
     fn distinct_focus_state_is_a_distinct_entry() {
-        let picker = Picker::from_fontsize((8, 16));
+        let picker = test_picker();
         let mut cache = ImageCache::new();
         let area = Rect::new(0, 0, 20, 10);
 
@@ -110,7 +118,7 @@ mod tests {
 
     #[test]
     fn clear_drops_all_entries() {
-        let picker = Picker::from_fontsize((8, 16));
+        let picker = test_picker();
         let mut cache = ImageCache::new();
         let area = Rect::new(0, 0, 20, 10);
         cache.get_or_insert_with(1, false, area, &picker, || image::DynamicImage::new_rgba8(4, 4));

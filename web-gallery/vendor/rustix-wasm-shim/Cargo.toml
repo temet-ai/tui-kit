@@ -1,0 +1,20 @@
+# A stub standing in for `rustix` 0.38 on wasm32-unknown-unknown, wired up by
+# the `[patch.crates-io]` entry in ../../Cargo.toml. See src/lib.rs for why
+# this exists and what would remove it.
+#
+# The version must satisfy `ratatui-image`'s `^0.38.4` requirement for cargo to
+# accept the patch; the feature names must match the ones `ratatui-image` asks
+# for, or cargo rejects them as unknown.
+[package]
+name = "rustix"
+version = "0.38.44"
+edition = "2021"
+license = "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
+publish = false
+description = "wasm32-unknown-unknown stub for the four rustix terminal APIs ratatui-image references"
+
+[features]
+default = []
+fs = []
+stdio = []
+termios = []

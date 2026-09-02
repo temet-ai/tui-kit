@@ -1,7 +1,7 @@
 ---
 thread: tui-kit-temet-cardnav
 status: review
-last_session: 2026-07-20
+last_session: 2026-08-21 (5fa0a04e-816f-4826-9cd5-a4e48c38b034) @ fcfdf51
 acceptance_criteria: see <acceptance-criteria> block below
 dependencies: []
 branch: (unborn — no initial commit yet)
@@ -19,7 +19,7 @@ worktree: /Users/dawiddutoit/projects/tui-kit
 - **Open questions:** hotkey behavior (⌃-letter panel jump) is deferred — only the visual hint is in scope for this unit.
 - **Decisions:** visual spec = temet design system (violet-black + ultraviolet; never teal/amber; radius 0; corner-tick focus; on-border title tee). Mechanism (SVG→vendored raster→ratatui-image, NavState/handle_key, cache) unchanged from v1.
 - **Blockers:** none.
-- Units: tui-kit-temet-cardnav tier=R3 rounds=1 status=verified-done
+- Units: tui-kit-temet-cardnav tier=R3 rounds=1 status=verified-done; tui-kit-temet-console-shell tier=R3 rounds=0 status=built-verified-live (native Tabs+StatusBar+header composed with image CardGrid; 58 tests, console --selftest PASS, live screenshot). Uncommitted after the card-nav initial commit.
 
 ## Acceptance criteria
 
@@ -37,3 +37,4 @@ worktree: /Users/dawiddutoit/projects/tui-kit
 - 2026-07-20: v1 mechanism built (teal, pre-temet) → steered to temet mid-flight → reskin completed (worker a6bba37, 31 tests self-reported). Entered Phase 3 acceptance under /implement (autonomous; operator asleep, checking AM). Frozen criteria above.
 - 2026-07-20: gate run by me (build/clippy/test green, both PNGs read). Criterion 2 gap (title-tee `[⌃x]` hotkey hint) closed by worker a356bc8 (added `Card.hotkey: Option<String>`, rendered dimmer hint, gallery samples ⌃p/⌃d/⌃f/⌃m/⌃e, +1 test). Independent verifier a7b2677e → PASS 6/6 with clean-rebuild + pixel-level evidence. Thread → review. DONE.
 - 2026-07-20: "stand it up + view it" — worker a186493 added gallery `--grid` (composed whole-nav PNG) + `--selftest` (real CardGrid into TestBackend + scripted handle_key, exit-coded) + `tests/stands_up.rs` (2 integration tests). My run: 34 tests green, SELFTEST PASS exit 0, grid PNG rendered. LIVE-VERIFIED: launched the real binary in Ghostty (kitty graphics), window-only screenshot shows all 5 cards rendering, PROC focused — the graphics-protocol path tests' Halfblocks backend didn't exercise. Cleanup note: used a broad `quit Ghostty` in the throwaway-window teardown — overly broad; prefer closing just the launched window next time.
+- 2026-08-21 (5fa0a04e-816f-4826-9cd5-a4e48c38b034) @ fcfdf51 — auto-checkpoint on session end

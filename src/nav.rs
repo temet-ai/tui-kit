@@ -3,6 +3,7 @@
 //! into application code and takes no closures, so it stays trivially unit
 //! testable and reusable across any app that hands it a grid of N items.
 
+#[cfg(feature = "input")]
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 /// Grid-navigation state: which item is selected, how many columns the grid
@@ -51,6 +52,7 @@ pub enum NavAction {
 ///   grid edges.
 /// - Enter activates the focused item.
 /// - Esc requests leaving the grid.
+#[cfg(feature = "input")]
 pub fn handle_key(state: &mut NavState, key: KeyEvent) -> Option<NavAction> {
     if state.len == 0 {
         return match key.code {
@@ -101,7 +103,7 @@ pub fn handle_key(state: &mut NavState, key: KeyEvent) -> Option<NavAction> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "input"))]
 mod tests {
     use super::*;
     use ratatui::crossterm::event::KeyModifiers;
