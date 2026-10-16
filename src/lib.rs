@@ -1,4 +1,7 @@
-//! `tui-kit`: an image-based, temet-styled card-navigation toolset for ratatui TUIs.
+//! `tui-kit`: parts for Rust terminal apps on Ratatui. Image cards (below) and
+//! the TUI Design layer ([`design`]); each works without the other. The
+//! repository README says how the parts fit, and `crates/tui-kit-ipc` covers
+//! drawing with Ink instead.
 //!
 //! Cards are authored as SVG, rasterized to PNG via a vendored `resvg`/
 //! `tiny-skia` pipeline, and placed inline through the terminal graphics

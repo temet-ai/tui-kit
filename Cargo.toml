@@ -9,9 +9,12 @@ exclude = ["web-gallery"]
 name = "tui-kit"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.90"
 # MIT, but src/render.rs stays Apache-2.0 (NOTICE).
 license = "MIT AND Apache-2.0"
-description = "Image-based cyberpunk card-navigation toolset for ratatui TUIs (SVG -> PNG -> terminal graphics protocol)"
+description = "Parts for Rust terminal apps on Ratatui: the TUI Design layer (theme, layout, panels, help bar) and image cards shown through the terminal's graphics protocol"
+repository = "https://github.com/temet-ai/tui-kit"
+readme = "README.md"
 
 [dependencies]
 # Re-exported at the crate root (`pub use ratatui;` / `pub use ratatui_image;`)

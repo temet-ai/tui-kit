@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "The renderer's end of tui-kit-ipc: socket framing, the protocol session, terminal restore and cell widths, for an Ink renderer of a Rust host",
+  "description": "The Ink app's end of tui-kit-ipc: draw a Rust terminal app's screen with Ink, with the session, terminal restore and cell widths",
+  "repository": { "type": "git", "url": "https://github.com/temet-ai/tui-kit", "directory": "ink" },
+  "engines": { "node": ">=22" },
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

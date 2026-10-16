@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.90"
 license = "MIT"
-description = "Run a terminal UI's renderer as a child process: JSON lines over a Unix socket, whole-state snapshots one at a time, restarts, fallback and terminal restore"
+description = "Draw a Rust terminal app's screen with an Ink renderer in a child process: JSON lines over a Unix socket, one view at a time, restarts, fallback and terminal restore"
+repository = "https://github.com/temet-ai/tui-kit"
+readme = "README.md"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
