@@ -1,4 +1,6 @@
-//! A terminal UI's renderer in another process.
+#![doc = include_str!("../README.md")]
+//!
+//! ## How it is put together
 //!
 //! The host owns all state and decisions; a renderer (the Ink package in
 //! `ink/`, or anything that speaks this protocol) owns the terminal while it
