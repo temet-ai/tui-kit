@@ -1,0 +1,8 @@
+tui-kit is MIT licensed (LICENSE), with these exceptions:
+
+- src/render.rs is adapted from xai-grok-mermaid's raster.rs and lib.rs
+  (grok-build), which are licensed under the Apache License, Version 2.0. That
+  file remains under the Apache License 2.0:
+  https://www.apache.org/licenses/LICENSE-2.0
+- assets/Roboto-Regular.ttf is the Roboto font, licensed under the Apache
+  License 2.0 (assets/Roboto-LICENSE.txt).

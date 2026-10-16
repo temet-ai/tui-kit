@@ -1,0 +1,26 @@
+{
+  "name": "tui-kit-ink",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "The renderer's end of tui-kit-ipc: socket framing, the protocol session, terminal restore and cell widths, for an Ink renderer of a Rust host",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./no-fetch": "./src/no-fetch.ts",
+    "./require-shim": "./src/require-shim.ts",
+    "./devtools-stub": "./src/devtools-stub.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "string-width": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

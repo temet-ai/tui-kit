@@ -9,6 +9,33 @@ contract for Ratatui interfaces. Start with:
   panel-internal geometry phase; not normative
 - [`docs/tui/REFERENCES.md`](docs/tui/REFERENCES.md) — sources and implementation references
 
+## A renderer in another process: `tui-kit-ipc` and `tui-kit-ink`
+
+For a Rust host whose screen is drawn by an Ink/React renderer (as radar's is), taken from
+radar's working code:
+
+- `crates/tui-kit-ipc`: JSON lines over a Unix socket, the renderer owning the terminal.
+  Generic over the app's view and input types: whole-state snapshots, one in flight until
+  acked, versions checked at the handshake (a mismatch is refused, not restarted), a
+  supervisor with a connect timeout, a stall timer, a restart window and a fallback so
+  the app carries on with its in-process renderer on the same state, and the terminal
+  restored after every child exit. Its TypeScript is generated into `ink/src/generated/`
+  by a test that fails when the copy is stale (`TUI_KIT_TS_UPDATE=1` rewrites it).
+- `ink/` (`tui-kit-ink`): the renderer's end. `connect`, a `Session<View, Input>`,
+  `oneWayOut` (one exit path that restores the terminal), `width`/`fit` in display cells
+  as the Rust side counts them, and the bundle shims (`require-shim`, `no-fetch`,
+  `devtools-stub`). It imports neither React nor Ink, so an app never gets two copies.
+
+```sh
+cargo nextest run -p tui-kit-ipc
+cd ink && npm install && npm run typecheck && npm test
+```
+
+The `host-parts-tui` skill's `new-project` starts an app that uses both, with a parity
+test that holds the Ink renderer to the host's text renderer.
+
+## The design layer
+
 The Rust crate is an implementation library that is still being brought into conformance
 with TUI Design. Existing widgets are **not automatically conformant merely because they
 live in this repository**. Conformance is established against the normative documentation

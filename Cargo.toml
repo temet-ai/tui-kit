@@ -1,8 +1,16 @@
+# The root crate (design layer, cards) and the crates under crates/: tui-kit-ipc
+# runs a renderer in another process (the Ink package in ink/) over a socket.
+# web-gallery is its own workspace (wasm).
+[workspace]
+members = [".", "crates/*"]
+exclude = ["web-gallery"]
+
 [package]
 name = "tui-kit"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+# MIT, but src/render.rs stays Apache-2.0 (NOTICE).
+license = "MIT AND Apache-2.0"
 description = "Image-based cyberpunk card-navigation toolset for ratatui TUIs (SVG -> PNG -> terminal graphics protocol)"
 
 [dependencies]

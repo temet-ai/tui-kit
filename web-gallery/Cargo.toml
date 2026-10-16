@@ -8,7 +8,7 @@
 name = "web-gallery"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT"
 publish = false
 description = "Ratzilla browser demo: the temet card gallery rendered as halfblock cells in a WASM terminal"
 
