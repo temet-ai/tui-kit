@@ -82,6 +82,13 @@ app keeps crashing or cannot start, your program is told and draws the same stat
 Ratatui. It needs Node 22 or later and runs on macOS and Linux. Start with the Rust side's
 [README](crates/tui-kit-ipc), then the [Ink side's](ink).
 
+## How the parts stay separate
+
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) says what each part owns, the lines between
+them (the design layer and the image path never use each other; the renderer link knows
+no renderer; the Ink side imports neither React nor Ink) and where new things go.
+`tests/boundaries.rs` fails when a change crosses a line.
+
 ## Status
 
 Early, and usable: the examples and tests pass, but there are no releases and the APIs will
