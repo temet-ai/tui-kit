@@ -1,7 +1,16 @@
 # tui-kit
 
-`tui-kit` is the reusable home of **TUI Design**, the normative, application-neutral
-contract for Ratatui interfaces. Start with:
+`tui-kit` holds reusable pieces for terminal interfaces written in Rust and drawn by
+Ratatui, by Ink (React in the terminal), or by both:
+
+| What | Where | For |
+|---|---|---|
+| TUI Design: the rules, the layout, the design layer | `docs/tui/`, `src/design/` | Ratatui |
+| Image cards, console shell, tabs, status bar | `src/` | Ratatui |
+| Running a renderer in another process | `crates/tui-kit-ipc` | the Rust host |
+| The renderer's end of that link | `ink/` (`tui-kit-ink`) | Ink |
+
+TUI Design is the normative, application-neutral contract for these interfaces. Start with:
 
 - [`docs/tui/STYLE_GUIDE.md`](docs/tui/STYLE_GUIDE.md) — normative TUI Design rules
 - [`docs/tui/LAYOUT.md`](docs/tui/LAYOUT.md) — the one universal layout
